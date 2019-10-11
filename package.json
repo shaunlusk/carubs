@@ -1,0 +1,24 @@
+{
+  "name": "carubs",
+  "version": "0.1.0",
+  "description": "Cluster and Analyze Reddit Users by Sub",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shaunlusk/carubs.git"
+  },
+  "author": "Shaun Lusk",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/shaunlusk/carubs/issues"
+  },
+  "homepage": "https://github.com/shaunlusk/carubs#readme",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.3",
+    "dotenv": "^8.1.0",
+    "snoowrap": "^1.20.0"
+  }
+}
