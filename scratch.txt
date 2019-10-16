@@ -2,3 +2,68 @@
 
 https://www.reddit.com/prefs/apps/
 
+https://not-an-aardvark.github.io/reddit-oauth-helper/
+
+Rough idea:
+scan "hot" posts in a subreddit.
+for each, all comments
+for each comment, grab author
+grab authors comments for past x days or so
+
+
+Features to analyze:
+posts per day
+whether posts are spread through day or clustered - spread metric?
+average post length
+post length standard deviation
+average post average upvotes
+average post average downvotes
+# subs posted to
+sub similarity score?
+whether the analyzed sub is the most commonly posted to
+phrase repeat count
+post similarity score (maybe use this one entirely instead of above)
+
+
+Data to collect to generate Features
+Post date
+post time
+post body length
+post up
+post down
+post subreddit 
+post text
+
+
+Post Table
+UserId          text
+date/time       date    for sqllite, use int # seconds - same as reddit
+body            text
+up              INTEGER
+down            INTEGER
+subredditId     text
+
+User Table
+UserId
+
+UserFeatureTable?
+
+
+subreddit Table
+subredditId
+subredditName
+
+
+
+sqlite types:
+
+
+    NULL. The value is a NULL value.
+
+    INTEGER. The value is a signed integer, stored in 1, 2, 3, 4, 6, or 8 bytes depending on the magnitude of the value.
+
+    REAL. The value is a floating point value, stored as an 8-byte IEEE floating point number.
+
+    TEXT. The value is a text string, stored using the database encoding (UTF-8, UTF-16BE or UTF-16LE).
+
+    BLOB. The value is a blob of data, stored exactly as it was input.

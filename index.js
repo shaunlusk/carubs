@@ -1,72 +1,122 @@
 require('dotenv').config();
 var snoowrap = require('snoowrap');
-const cheerio = require('cheerio');
-
-
-debugger;
-// NOTE: The following examples illustrate how to use snoowrap. However, hardcoding
-// credentials directly into your source code is generally a bad idea in practice (especially
-// if you're also making your source code public). Instead, it's better to either (a) use a separate
-// config file that isn't committed into version control, or (b) use environment variables.
-
-console.log(process.env);
-// console.log(process.cwd());
-// console.log(process.env.ACCESS_TOKEN);
-// process.exit();
 
 // Create a new snoowrap requester with OAuth credentials.
 // For more information on getting credentials, see here: https://github.com/not-an-aardvark/reddit-oauth-helper
 var r = new snoowrap({
   // TODO read version from package?
   userAgent: 'node:io.github.slusk.carubs:v0.1.0',
-  // accessToken: process.env.ACCESS_TOKEN
   clientId : process.env.CLIENT_ID,
   clientSecret : process.env.CLIENT_SECRET,
   refreshToken : process.env.REFRESH_TOKEN
 });
 
-// console.log(r);
-debugger;
-// r.getSubreddit('AskReddit').getWikiPage('bestof').content_md.then(console.log);
-// r.getUser('not_an_aardvark').link_karma.then(console.log);
-// var userProxy = r.getUser('shaungeek');
-// userProxy.getComments({
 
-// }).then((comments) => {
-//     console.log(comments[2]);
+// r.getComment('eizhkf7').author.name.then(console.log).catch(console.log);
+// r.getUser('shaungeek').getComments({sort:'top'}).then(console.log).catch(console.log);
+
+
+// r.getSubreddit('horizon').getHot().map(post => post.title).then(console.log);
+const db = {};
+let threadProcessedCount = 0;
+let userProcessedCount = 0;
+
+// r.getSubreddit('horizon').getHot().expandReplies({limit: Infinity, depth: Infinity}).then((threads) => {
+//   threads.forEach((thread) => {
+//     console.log(thread.title);
+//   });
 // }).catch(console.log);
-// console.log(userProxy);
-// .then(function(result) {
-//     console.log(result);
-// }).catch((reason) => {
-//     console.log(reason);
+
+
+function threadProcessed(totalThreadCount) {
+  threadProcessedCount++;
+  if (threadProcessedCount === totalThreadCount) {
+    // console.log(db);
+
+    populateUserComments();
+  }
+}
+
+function userProcessed(totalUserCount) {
+  userProcessedCount++;
+  if (userProcessedCount === totalUserCount) {
+    console.log(db);
+    var users = Object.keys(db);
+    console.log(users[0], db[users[0]].comments[0]);
+  }
+}
+
+function populateUserComments() {
+  const users = Object.keys(db);
+  users.forEach((user, idx, users) => {
+    console.log("Processing user ", user);
+    r.getUser(user).getComments({sort:'top', limit:50}).then((comments) => {
+      console.log("Found ", comments.length, " comments for ", user);
+      comments.forEach((comment) => {
+        db[user].comments.push({
+          id:comment.id,
+          created_utc: new Date(comment.created_utc * 1000),
+          body: comment.body,
+          upvotes: comment.ups,
+          downvotes: comment.downs,
+          subreddit_id: comment.subreddit_id
+        });
+      });
+      userProcessed(users.length);
+    });
+  });
+}
+
+console.log("Running...");
+
+
+
+r.getSubreddit('horizon').getHot().forEach((thread, idx, hotThreads) => {
+  const totalThreads = hotThreads.length;
+  thread.expandReplies({limit: Infinity, depth: Infinity}).then((thread) => {
+    // console.log(thread.title);
+    // console.log(thread.selftext);
+    thread.comments.forEach((comment) => {
+
+      if (!db[comment.author.name]) db[comment.author.name] = {comments:[]};
+    });
+    threadProcessed(totalThreads);
+  }).catch(console.log);
+});
+
+// logs promises
+// r.getSubreddit('horizon').getHot().map(thread => {
+//   var expandedThread = thread.expandReplies({limit: Infinity, depth: Infinity});
+//   var comments = expandedThread.comments.map((comment) => {
+//     return {
+//       created_utc: new Date(comment.created_utc * 1000),
+//       body: comment.body,
+//       upvotes: comment.ups,
+//       downvotes: comment.downs,
+//       subreddit_id: comment.subreddit_id
+//     }
+//   });
+//   return {
+//     threadTitle:expandedThread.title,
+//     commentCount:expandedThread.comments.length,
+//     comments:comments
+//   };
+// }).then(actualizedThread => {
+//   console.log(actualizedThread);
 // });
 
-// this works
-// r.getUser('shaungeek').getComments({sort:'top'}).then((commentHtml) => {
-//     // console.log(comments);
-//     const $ = cheerio.load(commentHtml);
-//     var p = $('.usertext-body p');
-//     // console.log(p.length);
-//     // console.log(p.text());
-
-//     p.each((i, item) => {
-//         console.log(i, $(item).text());
-//     });
-// }).catch(console.log);
-
-
-// r.getComment('eizhkf72ma').then(comment => {
+// r.getSubreddit('horizon').getHot()[0].expandReplies({limit: Infinity, depth: Infinity}).then((thread) => {
+//   console.log(thread.title);
+//   console.log(thread.selftext);
+//   console.log(thread.comments.length);
+//   var rawComment = thread.comments[0];
+//   var comment = {
+//     created_utc: new Date(rawComment.created_utc * 1000),
+//     body: rawComment.body,
+//     upvotes: rawComment.ups,
+//     downvotes: rawComment.downs,
+//     subreddit_id: rawComment.subreddit_id
+//   };
 //   console.log(comment);
 // });
 
-
-
-// const comment = r.getComment('c0hkuyq').fetch();
-// //.body.then(console.log).catch(console.log);
-// console.log(comment.body);
-// comment.then(console.log).catch(console.log);
-
-//works better
-r.getComment('eizhkf7').author.name.then(console.log).catch(console.log);
-r.getUser('shaungeek').getComments({sort:'top'}).then(console.log).catch(console.log);
