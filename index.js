@@ -55,6 +55,7 @@ function populateUserComments() {
       comments.forEach((comment) => {
         db[user].comments.push({
           id:comment.id,
+          user_id:user,
           created_utc: new Date(comment.created_utc * 1000),
           body: comment.body,
           upvotes: comment.ups,

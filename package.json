@@ -18,6 +18,7 @@
   "homepage": "https://github.com/shaunlusk/carubs#readme",
   "dependencies": {
     "dotenv": "^8.1.0",
-    "snoowrap": "^1.20.0"
+    "snoowrap": "^1.20.0",
+    "sqlite3": "^4.1.0"
   }
 }
