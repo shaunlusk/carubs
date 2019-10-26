@@ -30,8 +30,8 @@ class CarubsDB {
                 comment.user_id,
                 comment.created_utc,
                 comment.body,
-                comment.upvotes,
-                comment.downvotes,
+                comment.ups,
+                comment.downs,
                 comment.subreddit_id
             ], 
             function(err) {
