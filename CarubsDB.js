@@ -1,12 +1,20 @@
-var sqlite3 = require('sqlite3').verbose();
+const sqlite3 = require('sqlite3').verbose();
+const UserMap = require('./userMap');
 
 class CarubsDB {
     constructor(dbPath) {
         this.db = new sqlite3.Database(dbPath);
+        this.userFields = Object.keys(UserMap);
+        const fieldsString = userFields.join(',');
+        const valueParamsString = userFields.map(function(field) {return '?';}).join(',');
+        this.inserUserSql = `INSERT INTO users(${fieldsString}) VALUES(${valueParamsString})`;
     }
 
     insertUser(user, callback) {
-        this.db.run(`INSERT INTO users(id) VALUES(?)`, user, function(err) {
+        const mappedUser = this.userFields.map((field) => {
+            return user[field];
+        });
+        this.db.run(this.inserUserSql, mappedUser, function(err) {
             if (err) {
                 return callback(err);
             }
