@@ -43,16 +43,42 @@ r.getSubreddit('horizon').getHot().forEach((thread, idx, hotThreads) => {
 });
 
 function processUsers() {
-  let counter = 0;
+  let userSavedCounter = 0;
+  let userCommentsSavedCounter = 0;
   const totalUsers = Object.keys(userSet).length;
-  for (let user in userSet) {
-    r.getUser(user).fetch().then(u => {
-      carubsDb.insertUser(u, (err) => {
-        counter++;
-        if (counter === totalUsers) {
+  
+  for (let userName in userSet) {
+    r.getUser(userName).fetch().then(user => {
+      carubsDb.insertUser(user, (err) => {
+        userSavedCounter++;
+        if (userSavedCounter === totalUsers && userCommentsSavedCounter === totalUsers) {
           console.log('Done.');
         }
       });
+      user.getComments({sort:'top', limit:50}).then((comments) => {
+        console.log("Found ", comments.length, " comments for ", userName);
+        let commentCounter = 0;
+        comments.forEach((comment) => {
+          carubsDb.insertComment({
+            id: comment.id, 
+            user_id: user.id,
+            created_utc: comment.created_utc,
+            body: comment.body,
+            ups: comment.ups,
+            downs: comment.downs,
+            subreddit_id: comment.subreddit_id
+          }, (err) => {
+            if (err) console.log(err);
+            commentCounter++;
+            if (commentCounter === comments.length) userCommentsSavedCounter++;
+            if (userSavedCounter === totalUsers && userCommentsSavedCounter === totalUsers) {
+              console.log('Done.');
+            }
+          });
+
+        });
+      }).catch(console.log);;
     }).catch(console.log);
+    // break;
   }
 }

@@ -46,7 +46,7 @@ class CarubsDB {
 
     insertComment(comment, callback) {
         this.db.run(
-            `INSERT INTO Comments(id, user_id, timestamp, body, up, down, subreddit_id) VALUES(?,?,?,?,?,?,?)`, 
+            `INSERT INTO Comments(id, user_id, created_utc, body, ups, downs, subreddit_id) VALUES(?,?,?,?,?,?,?)`, 
             [comment.id, 
                 comment.user_id,
                 comment.created_utc,
