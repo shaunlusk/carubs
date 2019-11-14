@@ -1,5 +1,6 @@
 const sqlite3 = require('sqlite3').verbose();
 const UserMap = require('./userMap');
+const FeatureMap = require('./featureMap');
 
 class CarubsDB {
     constructor(dbOrPath) {
@@ -7,16 +8,23 @@ class CarubsDB {
         this.userFields = Object.keys(UserMap);
         const fieldsString = this.userFields.join(',');
         const valueParamsString = this.userFields.map(function(field) {return '?';}).join(',');
-        this.inserUserSql = `INSERT INTO users(${fieldsString}) VALUES(${valueParamsString})`;
+        this.insertUserSql = `INSERT INTO users(${fieldsString}) VALUES(${valueParamsString})`;
         this.selectUserSql = `SELECT ${fieldsString} FROM users`;
         this.userIdField = this.userFields.find(field => UserMap[field].isId);
+
+        this.featureFields = Object.keys(FeatureMap);
+        const featureFieldsString = this.featureFields.join(',');
+        const featureValuesParamsString = this.featureFields.map(function(field) {return '?';}).join(',');
+        this.insertFeatureSql = `INSERT INTO features(${featureFieldsString}) VALUES(${featureValuesParamsString})`;
+        this.selectFeatureSql = `SELECT ${fieldsString} FROM features`;
+        this.featureIdField = this.featureFields.find(field => FeatureMap[field].isId);
     }
 
     insertUser(user, callback) {
         const mappedUser = this.userFields.map((field) => {
             return user[field];
         });
-        this.db.run(this.inserUserSql, mappedUser, function(err) {
+        this.db.run(this.insertUserSql, mappedUser, function(err) {
             if (err) {
                 return callback(err);
             }
@@ -62,6 +70,29 @@ class CarubsDB {
                 return callback(null, this.lastID);
             }
         );
+    }
+
+    insertFeature(feature, callback) {
+        const mappedFeature = this.featureFields.map((field) => {
+            return feature[field];
+        });
+        this.db.run(this.insertFeatureSql, mappedFeature, function(err) {
+            if (err) {
+                return callback(err);
+            }
+            return callback(null, this.lastID);
+        });
+    }
+
+    getFeatureByUserId(userId, callback) {
+        const sql = this.selectFeatureSql + ` WHERE ${this.featureIdField} = ?`;
+        this.db.get(sql, [userId], (err, row) => {
+        if (err) {
+          return callback(err);
+        }
+        return callback(null, row);
+      });
+
     }
 
     close() {

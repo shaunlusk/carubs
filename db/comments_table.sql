@@ -1,4 +1,4 @@
-CREATE TABLE Comments (
+CREATE TABLE comments (
     id              TEXT        NOT NULL, 
     user_id         TEXT        NOT NULL,
     created_utc       INTEGER     NOT NULL,

@@ -3,11 +3,13 @@ const fs = require('fs');
 const async = require('async');
 const config = require('./config.js');
 const UserMap = require('./userMap.js');
+const FeatureMap = require('./featureMap.js');
 
 const sqls = [
-    'DROP TABLE IF EXISTS Comments;',    
-    'DROP TABLE IF EXISTS Users;',
-    'DROP TABLE IF EXISTS Subreddits;'
+    'DROP TABLE IF EXISTS comments;',    
+    'DROP TABLE IF EXISTS users;',
+    'DROP TABLE IF EXISTS subreddits;',
+    'DROP TABLE IF EXISTS features;',
 ];
 
 function buildTableSql(tableFilename, tableMap) {
@@ -47,14 +49,17 @@ function objectToTableDescriptors(tableMap) {
     return columns.join(',\n') + ',\n' + constraints.join(',\n');
 }
 
-const usersTableSql = buildTableSql("./db/UsersTable.sql", UserMap);
+const usersTableSql = buildTableSql("./db/users_table.sql", UserMap);
 sqls.push(usersTableSql);
 
-const subredditsTableSql = fs.readFileSync("./db/SubredditsTable.sql", "utf8");
+const subredditsTableSql = fs.readFileSync("./db/subreddits_table.sql", "utf8");
 sqls.push(subredditsTableSql);
 
-const commentsTableSql = fs.readFileSync("./db/CommentsTable.sql", "utf8");
+const commentsTableSql = fs.readFileSync("./db/comments_table.sql", "utf8");
 sqls.push(commentsTableSql);
+
+const featuresTableSql = buildTableSql("./db/features_table.sql", FeatureMap);
+sqls.push(featuresTableSql);
 
 class CarubsDBBuilder {
     constructor(path) {

@@ -16,24 +16,22 @@ var r = new snoowrap({
 });
 
 const userSet = {};
-let threadProcessedCount = 0;
-let userProcessedCount = 0;
+const subredditSet = {};
 const carubsDb = new CarubsDB(config.dbPath);
 
 
 console.log("Running...");
 
-const threadPromises = [];
 // hot threads is a single chainable promise; it has a forEach method though.
-// r.getSubreddit('horizon').getHot()
+// r.getSubreddit(config.targetSubreddit).getHot()
 
 let counter = 0;
-r.getSubreddit('horizon').getHot().forEach((thread, idx, hotThreads) => {
+r.getSubreddit(config.targetSubreddit).getHot().forEach((thread, idx, hotThreads) => {
   const totalThreads = hotThreads.length;
   thread.expandReplies({limit: Infinity, depth: Infinity}).then((thread) => {
     for (let comment of thread.comments) {
       if (comment.author.name === '[deleted]') continue;
-      if (!userSet[comment.author.name]) userSet[comment.author.name] = {comments:[]};
+      if (!userSet[comment.author.name]) userSet[comment.author.name] = comment.author.name;
     }
     counter++;
     if (counter === totalThreads) {
@@ -45,20 +43,46 @@ r.getSubreddit('horizon').getHot().forEach((thread, idx, hotThreads) => {
 function processUsers() {
   let userSavedCounter = 0;
   let userCommentsSavedCounter = 0;
+  let userSubredditSavedCounter = 0;
   const totalUsers = Object.keys(userSet).length;
   
   for (let userName in userSet) {
     r.getUser(userName).fetch().then(user => {
+      console.log('Processing user', (userSavedCounter+1), 'of', totalUsers);
       carubsDb.insertUser(user, (err) => {
         userSavedCounter++;
-        if (userSavedCounter === totalUsers && userCommentsSavedCounter === totalUsers) {
+        if (userProcessingIsDone(userSavedCounter, userCommentsSavedCounter, userSubredditSavedCounter, totalUsers)) {
           console.log('Done.');
         }
       });
-      user.getComments({sort:'top', limit:50}).then((comments) => {
-        console.log("Found ", comments.length, " comments for ", userName);
+      user.getComments({sort:config.commentSort, limit:config.commentLimmit}).then((comments) => {
+        // console.log("Found ", comments.length, " comments for ", userName);
         let commentCounter = 0;
+        let commentSubredditCounter = 0;
         comments.forEach((comment) => {
+          const subredditName = comment.subreddit.display_name;
+          if (subredditSet[subredditName]) {
+            commentSubredditCounter++;
+            if (commentSubredditCounter === comments.length) userSubredditSavedCounter++;
+            if (userProcessingIsDone(userSavedCounter, userCommentsSavedCounter, userSubredditSavedCounter, totalUsers)) {
+              console.log('Done.');
+            }
+          } else {
+            subredditSet[subredditName] = subredditSet;
+            carubsDb.insertSubreddit(
+              {
+                id: comment.subreddit_id,
+                name: subredditName
+              }, (err) => {
+                if (err) console.log(err);
+                commentSubredditCounter++;
+                if (commentSubredditCounter === comments.length) userSubredditSavedCounter++;
+                if (userProcessingIsDone(userSavedCounter, userCommentsSavedCounter, userSubredditSavedCounter, totalUsers)) {
+                  console.log('Done.');
+                }
+              }
+            );
+          }
           carubsDb.insertComment({
             id: comment.id, 
             user_id: user.id,
@@ -71,14 +95,18 @@ function processUsers() {
             if (err) console.log(err);
             commentCounter++;
             if (commentCounter === comments.length) userCommentsSavedCounter++;
-            if (userSavedCounter === totalUsers && userCommentsSavedCounter === totalUsers) {
+            if (userProcessingIsDone(userSavedCounter, userCommentsSavedCounter, userSubredditSavedCounter, totalUsers)) {
               console.log('Done.');
             }
           });
 
         });
-      }).catch(console.log);;
+      }).catch(console.log);
     }).catch(console.log);
     // break;
   }
+}
+
+function userProcessingIsDone(userSavedCounter, userCommentsSavedCounter, userSubredditSavedCounter, totalUsers) {
+  return userSavedCounter === totalUsers && userCommentsSavedCounter === totalUsers && userSubredditSavedCounter === totalUsers;
 }
