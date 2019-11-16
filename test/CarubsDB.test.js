@@ -1,10 +1,11 @@
 const CarubsDB = require('../CarubsDB');
 const UserMap = require('../userMap');
+const CommentMap = require('../commentMap');
 const async = require('async');
 const CarubsDBBuilder = require('../CarubsDBBuilder');
 
 describe('CarubsDB', () => {
-    describe('user', () => {
+    describe('users', () => {
         it('should write and retrieve data', (done) => {
             new CarubsDBBuilder('').rebuildAll((err,builtDb) => {
                 if (err) throw err;
@@ -23,6 +24,33 @@ describe('CarubsDB', () => {
                         }, (err) => {
                             if (err) throw err;
                             validateRetrievedData(userSet, retrievedUsers);
+                            done();
+                        }
+                    );
+                }); 
+            });
+        });
+    });
+    describe('comments', () => {
+        it('should write and retrieve data', (done) => {
+            new CarubsDBBuilder('').rebuildAll((err,builtDb) => {
+                if (err) throw err;
+                const db = new CarubsDB(builtDb);
+                const commentSet = generateDataSet(CommentMap, 3);
+                const commentUserIds = commentSet.map(comment => comment.user_id);
+                const retrievedComments = [];
+                debugger;
+                async.each(commentSet, db.insertComment.bind(db), (err) => {
+                    if (err) throw err;
+                    async.each(commentUserIds, (id,callback) => {
+                            db.getCommentsByUserId(id, (err, row) => {
+                                if (err) return callback(err);
+                                retrievedComments.push(row);
+                                callback();
+                            })
+                        }, (err) => {
+                            if (err) throw err;
+                            validateRetrievedData(commentSet, retrievedComments);
                             done();
                         }
                     );

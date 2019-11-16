@@ -2,8 +2,9 @@ const sqlite3 = require('sqlite3').verbose();
 const fs = require('fs');
 const async = require('async');
 const config = require('./config.js');
-const UserMap = require('./userMap.js');
-const FeatureMap = require('./featureMap.js');
+const UserMap = require('./fieldMaps/userMap.js');
+const FeatureMap = require('./fieldMaps/featureMap.js');
+const CommentMap = require('./fieldMaps/commentMap.js');
 
 const sqls = [
     'DROP TABLE IF EXISTS comments;',    
@@ -44,6 +45,7 @@ function objectToTableDescriptors(tableMap) {
         columns.push(columnString);
 
         if (columnDef.isId) constraints.push(`PRIMARY KEY (${key})`);
+        if (columnDef.referencesTable) constraints.push(`FOREIGN KEY (${key}) REFERENCES ${columnDef.referencesTable}(${columnDef.referencesField})`);
     });
 
     return columns.join(',\n') + ',\n' + constraints.join(',\n');
@@ -55,7 +57,7 @@ sqls.push(usersTableSql);
 const subredditsTableSql = fs.readFileSync("./db/subreddits_table.sql", "utf8");
 sqls.push(subredditsTableSql);
 
-const commentsTableSql = fs.readFileSync("./db/comments_table.sql", "utf8");
+const commentsTableSql = buildTableSql("./db/comments_table.sql", CommentMap);
 sqls.push(commentsTableSql);
 
 const featuresTableSql = buildTableSql("./db/features_table.sql", FeatureMap);

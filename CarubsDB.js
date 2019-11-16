@@ -1,6 +1,7 @@
 const sqlite3 = require('sqlite3').verbose();
-const UserMap = require('./userMap');
-const FeatureMap = require('./featureMap');
+const UserMap = require('./fieldMaps/userMap');
+const FeatureMap = require('./fieldMaps/featureMap');
+const CommentMap = require('./fieldMaps/commentMap');
 
 class CarubsDB {
     constructor(dbOrPath) {
@@ -11,6 +12,13 @@ class CarubsDB {
         this.insertUserSql = `INSERT INTO users(${fieldsString}) VALUES(${valueParamsString})`;
         this.selectUserSql = `SELECT ${fieldsString} FROM users`;
         this.userIdField = this.userFields.find(field => UserMap[field].isId);
+
+        this.commentFields = Object.keys(CommentMap);
+        const commentFieldString = this.commentFields.join(',');
+        const commentValuesParamsString = this.commentFields.map(function(field) {return '?';}).join(',');
+        this.insertCommentSql = `INSERT INTO comments(${commentFieldString}) VALUES(${commentValuesParamsString})`;
+        this.selectCommentSql = `SELECT ${commentFieldString} FROM comments`;
+        this.commentIdField = this.commentFields.find(field => CommentMap[field].isId);
 
         this.featureFields = Object.keys(FeatureMap);
         const featureFieldsString = this.featureFields.join(',');
@@ -40,7 +48,16 @@ class CarubsDB {
         }
         return callback(null, row);
       });
+    }
 
+    getUsers(callback) {
+        const sql = this.selectUserSql;
+        this.db.all(sql, [], (err, rows) => {
+        if (err) {
+          return callback(err);
+        }
+        return callback(null, rows);
+      });
     }
 
     insertSubreddit(subreddit, callback) {
@@ -53,23 +70,25 @@ class CarubsDB {
     }
 
     insertComment(comment, callback) {
-        this.db.run(
-            `INSERT INTO Comments(id, user_id, created_utc, body, ups, downs, subreddit_id) VALUES(?,?,?,?,?,?,?)`, 
-            [comment.id, 
-                comment.user_id,
-                comment.created_utc,
-                comment.body,
-                comment.ups,
-                comment.downs,
-                comment.subreddit_id
-            ], 
-            function(err) {
-                if (err) {
-                    return callback(err);
-                }
-                return callback(null, this.lastID);
+        const mappedComment = this.commentFields.map((field) => {
+            return comment[field];
+        });
+        this.db.run(this.insertCommentSql, mappedComment, function(err) {
+            if (err) {
+                return callback(err);
             }
-        );
+            return callback(null, this.lastID);
+        });
+    }
+
+    getCommentsByUserId(userId, callback) {
+        const sql = this.selectCommentSql + ` WHERE user_id = ?`;
+        this.db.get(sql, [userId], (err, row) => {
+        if (err) {
+          return callback(err);
+        }
+        return callback(null, row);
+      });
     }
 
     insertFeature(feature, callback) {

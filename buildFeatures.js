@@ -23,6 +23,14 @@ const config = require('./config');
     // num_comments_in_targeted_subreddit   = # comments with subreddit id matching the target
     // most_comments_in_targeted_subreddit  = whether user comments more in target subreddit than others; hashset of subreddit ids from comments with value set to count; find entry with max
 
+    // max_silver_awards        = max # silver for any comment
+    // max_gold_awards          = max # gold for any comment
+    // max_platinum_awards      = max # platinum for any comment
+
+    // total_silver_awards      = total # silver for all comments
+    // total_gold_awards        = total # gold for all comments
+    // total_platinum_awards    = total # platinum for all comments
+
     // Other todo - std dev on metrics with avg/min/max?
     // sentiment analysis?
 

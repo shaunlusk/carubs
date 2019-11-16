@@ -1,6 +1,6 @@
 module.exports = {
     dbPath : './db/carubsdb',
-    commentLimmit : 3,
+    commentLimit : 2,
     commentSort: 'new',
     targetSubreddit : 'horizon'
 };

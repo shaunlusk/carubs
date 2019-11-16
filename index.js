@@ -2,8 +2,6 @@ require('dotenv').config();
 const snoowrap = require('snoowrap');
 const CarubsDB = require('./CarubsDB');
 const config = require('./config');
-const async = require('async');
-const PromiseEachHelper = require('./PromiseEachHelper');
 
 // Create a new snoowrap requester with OAuth credentials.
 // For more information on getting credentials, see here: https://github.com/not-an-aardvark/reddit-oauth-helper
@@ -12,7 +10,8 @@ var r = new snoowrap({
   userAgent: 'node:io.github.slusk.carubs:v0.1.0',
   clientId : process.env.CLIENT_ID,
   clientSecret : process.env.CLIENT_SECRET,
-  refreshToken : process.env.REFRESH_TOKEN
+  refreshToken : process.env.REFRESH_TOKEN,
+  continueAfterRatelimitError: true
 });
 
 const userSet = {};
@@ -48,14 +47,13 @@ function processUsers() {
   
   for (let userName in userSet) {
     r.getUser(userName).fetch().then(user => {
-      console.log('Processing user', (userSavedCounter+1), 'of', totalUsers);
       carubsDb.insertUser(user, (err) => {
         userSavedCounter++;
         if (userProcessingIsDone(userSavedCounter, userCommentsSavedCounter, userSubredditSavedCounter, totalUsers)) {
           console.log('Done.');
         }
       });
-      user.getComments({sort:config.commentSort, limit:config.commentLimmit}).then((comments) => {
+      user.getComments({sort:config.commentSort, limit:config.commentLimit}).then((comments) => {
         // console.log("Found ", comments.length, " comments for ", userName);
         let commentCounter = 0;
         let commentSubredditCounter = 0;
@@ -83,6 +81,7 @@ function processUsers() {
               }
             );
           }
+          const awards = getAwardCounts(comment)
           carubsDb.insertComment({
             id: comment.id, 
             user_id: user.id,
@@ -90,11 +89,17 @@ function processUsers() {
             body: comment.body,
             ups: comment.ups,
             downs: comment.downs,
-            subreddit_id: comment.subreddit_id
+            subreddit_id: comment.subreddit_id,
+            silver_award_count: awards.silver,
+            gold_award_count: awards.gold,
+            platinum_award_count: awards.platinum,
           }, (err) => {
             if (err) console.log(err);
             commentCounter++;
-            if (commentCounter === comments.length) userCommentsSavedCounter++;
+            if (commentCounter === comments.length) {
+              userCommentsSavedCounter++;
+              console.log('Processed user', userSavedCounter, 'of', totalUsers);
+            }
             if (userProcessingIsDone(userSavedCounter, userCommentsSavedCounter, userSubredditSavedCounter, totalUsers)) {
               console.log('Done.');
             }
@@ -109,4 +114,16 @@ function processUsers() {
 
 function userProcessingIsDone(userSavedCounter, userCommentsSavedCounter, userSubredditSavedCounter, totalUsers) {
   return userSavedCounter === totalUsers && userCommentsSavedCounter === totalUsers && userSubredditSavedCounter === totalUsers;
+}
+
+function getAwardCounts(comment) {
+  if (!comment.all_awardings || comment.all_awardings.length === 0) return {silver:0,gold:0,platinum:0};
+  const silver = comment.all_awardings.find(award => award.name === 'Silver');
+  const gold = comment.all_awardings.find(award => award.name === 'Gold');
+  const platinum = comment.all_awardings.find(award => award.name === 'Platinum');
+  return {
+    silver: silver ? silver.count || 0 : 0,
+    gold: gold ? gold.count || 0 : 0,
+    platinum: platinum ? platinum.count || 0 : 0
+  };
 }
