@@ -83,11 +83,11 @@ class CarubsDB {
 
     getCommentsByUserId(userId, callback) {
         const sql = this.selectCommentSql + ` WHERE user_id = ?`;
-        this.db.get(sql, [userId], (err, row) => {
+        this.db.all(sql, [userId], (err, rows) => {
         if (err) {
           return callback(err);
         }
-        return callback(null, row);
+        return callback(null, rows);
       });
     }
 

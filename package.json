@@ -19,6 +19,7 @@
   "dependencies": {
     "async": "^3.1.0",
     "dotenv": "^8.1.0",
+    "slcommon": "github:shaunlusk/slcommon",
     "snoowrap": "^1.20.0",
     "sqlite3": "^4.1.0"
   },
