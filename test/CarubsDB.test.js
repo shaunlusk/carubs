@@ -1,6 +1,6 @@
 const CarubsDB = require('../CarubsDB');
-const UserMap = require('../userMap');
-const CommentMap = require('../commentMap');
+const UserMap = require('../fieldMaps/userMap');
+const CommentMap = require('../fieldMaps/commentMap');
 const async = require('async');
 const CarubsDBBuilder = require('../CarubsDBBuilder');
 
@@ -51,6 +51,36 @@ describe('CarubsDB', () => {
                         }, (err) => {
                             if (err) throw err;
                             validateRetrievedData(commentSet, retrievedComments);
+                            done();
+                        }
+                    );
+                }); 
+            });
+        });
+    });
+    describe('subreddits', () => {
+        it('should write and retrieve data', (done) => {
+            new CarubsDBBuilder('').rebuildAll((err,builtDb) => {
+                if (err) throw err;
+                const db = new CarubsDB(builtDb);
+                const subredditSet = [
+                    {id:'t5_asdf', name:"bogus1"},
+                    {id:'t5_qweqr', name:"bogus2"}
+                ];
+                const subredditNames = subredditSet.map(s => s.name);
+                const retrievedSubreddits = [];
+                debugger;
+                async.each(subredditSet, db.insertSubreddit.bind(db), (err) => {
+                    if (err) throw err;
+                    async.each(subredditNames, (name,callback) => {
+                            db.getSubredditByName(name, (err, row) => {
+                                if (err) return callback(err);
+                                retrievedSubreddits.push(row);
+                                callback();
+                            })
+                        }, (err) => {
+                            if (err) throw err;
+                            validateRetrievedData(subredditSet, retrievedSubreddits);
                             done();
                         }
                     );

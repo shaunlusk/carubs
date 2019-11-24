@@ -61,11 +61,21 @@ class CarubsDB {
     }
 
     insertSubreddit(subreddit, callback) {
-        this.db.run(`INSERT INTO Subreddits(id, name) VALUES(?,?)`, [subreddit.id, subreddit.name], function(err) {
+        this.db.run(`INSERT INTO subreddits(id, name) VALUES(?,?)`, [subreddit.id, subreddit.name], function(err) {
             if (err) {
                 return callback(err);
             }
             return callback(null, this.lastID);
+        });
+    }
+
+    getSubredditByName(subredditName, callback) {
+        const sql = `SELECT id, name FROM subreddits WHERE name = ?`;
+        this.db.get(sql, [subredditName], (err, row) => {
+            if (err) {
+              return callback(err);
+            }
+            return callback(null, row);
         });
     }
 

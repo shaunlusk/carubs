@@ -6,12 +6,14 @@ const UserMap = require('./fieldMaps/userMap.js');
 const FeatureMap = require('./fieldMaps/featureMap.js');
 const CommentMap = require('./fieldMaps/commentMap.js');
 
-const sqls = [
-    'DROP TABLE IF EXISTS comments;',    
-    'DROP TABLE IF EXISTS users;',
-    'DROP TABLE IF EXISTS subreddits;',
-    'DROP TABLE IF EXISTS features;',
-];
+const dropStatements = {
+    comments: 'DROP TABLE IF EXISTS comments;',    
+    users: 'DROP TABLE IF EXISTS users;',
+    features: 'DROP TABLE IF EXISTS features;',
+    subreddits: 'DROP TABLE IF EXISTS subreddits;',
+};
+
+const sqls = Object.values(dropStatements);
 
 function buildTableSql(tableFilename, tableMap) {
     let tableSql = fs.readFileSync(tableFilename, "utf8");
@@ -74,9 +76,17 @@ class CarubsDBBuilder {
         });
         
         async.series(tasks, (err) => {
-            if (err) return callback(err);
-            callback(null, this.db);
+            callback(err, this.db);
         });
+    }
+
+    rebuildFeaturesTable(callback) {
+        this.db.run(dropStatements.features, [], err => {
+            if (err) return callback(err);
+            this.db.run(featuresTableSql, [], err => {
+                callback(err, this.db);
+            })
+        })
     }
 }
 
