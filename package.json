@@ -20,6 +20,7 @@
     "async": "^3.1.0",
     "dotenv": "^8.2.0",
     "slcommon": "github:shaunlusk/slcommon",
+    "slnodekmeans": "github:shaunlusk/slnodekmeans",
     "snoowrap": "^1.20.1",
     "sqlite3": "^4.1.0"
   },

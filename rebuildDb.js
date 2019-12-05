@@ -12,4 +12,11 @@ if (!tableArg || tableArg === 'all') {
         if (err) return console.log(err);
         console.log("Features Table rebuilt.");
     });
+} else if (tableArg === 'clusters') {
+    new CarubsDBBuilder(config.dbPath).rebuildClustersTable(err => {
+        if (err) return console.log(err);
+        console.log("Clusters Table rebuilt.");
+    });
+} else {
+    console.log("Unknown Argument:", tableArg);
 }

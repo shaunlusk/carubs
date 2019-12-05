@@ -5,12 +5,14 @@ const config = require('./config.js');
 const UserMap = require('./fieldMaps/userMap.js');
 const FeatureMap = require('./fieldMaps/featureMap.js');
 const CommentMap = require('./fieldMaps/commentMap.js');
+const ClusterMap = require('./fieldMaps/clusterMap.js');
 
 const dropStatements = {
     comments: 'DROP TABLE IF EXISTS comments;',    
     users: 'DROP TABLE IF EXISTS users;',
     features: 'DROP TABLE IF EXISTS features;',
     subreddits: 'DROP TABLE IF EXISTS subreddits;',
+    clusters: 'DROP TABLE IF EXISTS clusters;'
 };
 
 const sqls = Object.values(dropStatements);
@@ -23,6 +25,7 @@ function buildTableSql(tableFilename, tableMap) {
 }
 
 function objectToTableDescriptors(tableMap) {
+    const primaryKeys = [];
     const columns = [];
     const constraints = [];
     Object.keys(tableMap).forEach((key) => {
@@ -46,11 +49,12 @@ function objectToTableDescriptors(tableMap) {
         if (columnDef.isRequired) columnString += '\tNOT NULL';
         columns.push(columnString);
 
-        if (columnDef.isId) constraints.push(`PRIMARY KEY (${key})`);
+        if (columnDef.isId) primaryKeys.push(key);
         if (columnDef.referencesTable) constraints.push(`FOREIGN KEY (${key}) REFERENCES ${columnDef.referencesTable}(${columnDef.referencesField})`);
     });
-
-    return columns.join(',\n') + ',\n' + constraints.join(',\n');
+    let pkString = primaryKeys.length > 0 ? `,\nPRIMARY KEY (${primaryKeys.join(',')})` : '';
+    let fkString = constraints.length > 0 ? '\n,' + constraints.join(',\n') : '';
+    return columns.join(',\n') + pkString + fkString;
 }
 
 const usersTableSql = buildTableSql("./db/users_table.sql", UserMap);
@@ -64,6 +68,9 @@ sqls.push(commentsTableSql);
 
 const featuresTableSql = buildTableSql("./db/features_table.sql", FeatureMap);
 sqls.push(featuresTableSql);
+
+const clustersTableSql = buildTableSql("./db/clusters_table.sql", ClusterMap);
+sqls.push(clustersTableSql);
 
 class CarubsDBBuilder {
     constructor(path) {
@@ -84,6 +91,15 @@ class CarubsDBBuilder {
         this.db.run(dropStatements.features, [], err => {
             if (err) return callback(err);
             this.db.run(featuresTableSql, [], err => {
+                callback(err, this.db);
+            })
+        })
+    }
+
+    rebuildClustersTable(callback) {
+        this.db.run(dropStatements.clusters, [], err => {
+            if (err) return callback(err);
+            this.db.run(clustersTableSql, [], err => {
                 callback(err, this.db);
             })
         })
