@@ -11,6 +11,7 @@ const dropStatements = {
     comments: 'DROP TABLE IF EXISTS comments;',    
     users: 'DROP TABLE IF EXISTS users;',
     features: 'DROP TABLE IF EXISTS features;',
+    normalizedFeatures: 'DROP TABLE IF EXISTS normalized_features;',
     subreddits: 'DROP TABLE IF EXISTS subreddits;',
     clusters: 'DROP TABLE IF EXISTS clusters;'
 };
@@ -69,6 +70,9 @@ sqls.push(commentsTableSql);
 const featuresTableSql = buildTableSql("./db/features_table.sql", FeatureMap);
 sqls.push(featuresTableSql);
 
+const normalizedFeaturesTableSql = buildTableSql("./db/features_table.sql", FeatureMap).replace("features", "normalized_features");
+sqls.push(normalizedFeaturesTableSql);
+
 const clustersTableSql = buildTableSql("./db/clusters_table.sql", ClusterMap);
 sqls.push(clustersTableSql);
 
@@ -91,6 +95,15 @@ class CarubsDBBuilder {
         this.db.run(dropStatements.features, [], err => {
             if (err) return callback(err);
             this.db.run(featuresTableSql, [], err => {
+                callback(err, this.db);
+            })
+        })
+    }
+
+    rebuildNormalizedFeaturesTable(callback) {
+        this.db.run(dropStatements.normalizedFeatures, [], err => {
+            if (err) return callback(err);
+            this.db.run(normalizedFeaturesTableSql, [], err => {
                 callback(err, this.db);
             })
         })

@@ -12,6 +12,11 @@ if (!tableArg || tableArg === 'all') {
         if (err) return console.log(err);
         console.log("Features Table rebuilt.");
     });
+} else if (tableArg === 'normalized_features') {
+    new CarubsDBBuilder(config.dbPath).rebuildNormalizedFeaturesTable(err => {
+        if (err) return console.log(err);
+        console.log("normalized_features Table rebuilt.");
+    });
 } else if (tableArg === 'clusters') {
     new CarubsDBBuilder(config.dbPath).rebuildClustersTable(err => {
         if (err) return console.log(err);
